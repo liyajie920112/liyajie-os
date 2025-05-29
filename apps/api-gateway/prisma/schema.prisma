@@ -14,6 +14,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// 用户表
 model User {
   @@map("user")
   /// 用户id
