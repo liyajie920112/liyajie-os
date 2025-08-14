@@ -1,0 +1,7 @@
+// 自定义主题变量
+:root {
+  --main-bg-color: rgb(238, 238, 238);
+}
+html.dark {
+  --main-bg-color: rgb(44, 42, 42);
+}

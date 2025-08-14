@@ -1,0 +1,5 @@
+// 覆盖element-plus的变量
+:root {
+  --el-menu-item-height: 36px;
+  --el-menu-sub-item-height: var(--el-menu-item-height);
+}
