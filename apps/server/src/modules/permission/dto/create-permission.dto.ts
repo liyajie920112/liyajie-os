@@ -24,4 +24,19 @@ export class CreatePermissionDto {
   @IsBoolean()
   @IsOptional()
   status?: boolean = true;
+
+  @ApiPropertyOptional({ description: '关联的菜单路径' })
+  @IsString()
+  @IsOptional()
+  menuPath?: string;
+
+  @ApiPropertyOptional({ description: 'API路径（用于API类型权限）' })
+  @IsString()
+  @IsOptional()
+  apiPath?: string;
+
+  @ApiPropertyOptional({ description: '数据范围（用于DATA类型权限）' })
+  @IsString()
+  @IsOptional()
+  dataScope?: string;
 }

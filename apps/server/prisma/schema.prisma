@@ -34,11 +34,13 @@ model Role {
   code        String   @unique @db.VarChar(50)
   description String?  @db.VarChar(255)
   status      Boolean  @default(true)
+  permissions BigInt   @default(0) // 基础权限位 (0-63)
+  permissionsString String? @db.VarChar(1000) // 扩展权限位字符串表示
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime? // 软删除字段
   users       UserRole[]
-  permissions RolePermission[]
+  rolePermissions RolePermission[]
 }
 
 model Permission {
@@ -48,10 +50,22 @@ model Permission {
   type        PermissionType @default(MENU)
   description String?      @db.VarChar(255)
   status      Boolean      @default(true)
+  bitPosition Int          @unique // 权限位位置
+  menuPath    String?      @db.VarChar(255) // 关联的菜单路径
+  apiPath     String?      @db.VarChar(255) // API路径（用于API类型权限）
+  dataScope   String?      @db.VarChar(255) // 数据范围（用于DATA类型权限）
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?    // 软删除字段
   roles       RolePermission[]
+}
+
+model MenuPermissionGroup {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(50)
+  menuCodes String   @db.VarChar(1000) // 存储该组包含的菜单代码，用逗号分隔
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum PermissionType {

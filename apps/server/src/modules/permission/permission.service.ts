@@ -11,10 +11,20 @@ export class PermissionService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createPermissionDto: CreatePermissionDto): Promise<Permission> {
-    const result = await this.prisma.permission.create({
-      data: createPermissionDto,
+    // 获取下一个可用的权限位位置
+    const maxBitPosition = await this.prisma.permission.findFirst({
+      orderBy: { bitPosition: 'desc' },
     });
-    return result as unknown as Permission;
+    
+    const nextBitPosition = maxBitPosition ? maxBitPosition.bitPosition + 1 : 0;
+
+    const permission = await this.prisma.permission.create({
+      data: {
+        ...createPermissionDto,
+        bitPosition: nextBitPosition,
+      },
+    });
+    return permission as unknown as Permission;
   }
 
   async findAll(query: QueryPermissionDto): Promise<Permission[]> {
@@ -42,32 +52,50 @@ export class PermissionService {
       where.status = query.status;
     }
 
-    const results = await this.prisma.permission.findMany({
+    if (query.menuPath) {
+      where.menuPath = {
+        contains: query.menuPath,
+      };
+    }
+
+    if (query.apiPath) {
+      where.apiPath = {
+        contains: query.apiPath,
+      };
+    }
+
+    if (query.dataScope) {
+      where.dataScope = {
+        contains: query.dataScope,
+      };
+    }
+
+    const permissions = await this.prisma.permission.findMany({
       where,
       orderBy: {
         createdAt: 'desc',
       },
     });
-    return results as unknown as Permission[];
+    return permissions as unknown as Permission[];
   }
 
   async findOne(id: number): Promise<Permission> {
-    const result = await this.prisma.permission.findUnique({
-      where: {
+    const permission = await this.prisma.permission.findUnique({
+      where: { 
         id,
       },
     });
 
-    if (!result) {
+    if (!permission) {
       throw new NotFoundException(`Permission with ID ${id} not found`);
     }
 
     // 检查是否已被软删除
-    if (result.deletedAt) {
+    if (permission.deletedAt) {
       throw new NotFoundException(`Permission with ID ${id} not found`);
     }
 
-    return result as unknown as Permission;
+    return permission as unknown as Permission;
   }
 
   async update(
@@ -77,18 +105,18 @@ export class PermissionService {
     // 先检查是否存在且未被软删除
     await this.findOne(id);
 
-    const result = await this.prisma.permission.update({
-      where: {
+    const permission = await this.prisma.permission.update({
+      where: { 
         id,
       },
       data: updatePermissionDto,
     });
 
-    return result as unknown as Permission;
+    return permission as unknown as Permission;
   }
 
   /**
-   * 软删除权限（假删除）
+   * 软删除权限
    * @param id 权限ID
    * @returns 被删除的权限
    */
@@ -97,14 +125,14 @@ export class PermissionService {
       // 先检查权限是否存在且未被软删除
       await this.findOne(id);
 
-      const result = await this.prisma.permission.update({
+      const permission = await this.prisma.permission.update({
         where: { id },
         data: {
           deletedAt: new Date(),
         },
       });
 
-      return result as unknown as Permission;
+      return permission as unknown as Permission;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -132,5 +160,71 @@ export class PermissionService {
       }
       throw error;
     }
+  }
+
+  /**
+   * 根据菜单路径查找权限
+   * @param menuPath 菜单路径
+   * @returns 权限列表
+   */
+  async findByMenuPath(menuPath: string): Promise<Permission[]> {
+    const permissions = await this.prisma.permission.findMany({
+      where: {
+        menuPath: {
+          contains: menuPath,
+        },
+        deletedAt: null,
+      },
+    });
+    return permissions as unknown as Permission[];
+  }
+
+  /**
+   * 根据API路径查找权限
+   * @param apiPath API路径
+   * @returns 权限列表
+   */
+  async findByApiPath(apiPath: string): Promise<Permission[]> {
+    const permissions = await this.prisma.permission.findMany({
+      where: {
+        apiPath: {
+          contains: apiPath,
+        },
+        deletedAt: null,
+      },
+    });
+    return permissions as unknown as Permission[];
+  }
+
+  /**
+   * 根据数据范围查找权限
+   * @param dataScope 数据范围
+   * @returns 权限列表
+   */
+  async findByDataScope(dataScope: string): Promise<Permission[]> {
+    const permissions = await this.prisma.permission.findMany({
+      where: {
+        dataScope: {
+          contains: dataScope,
+        },
+        deletedAt: null,
+      },
+    });
+    return permissions as unknown as Permission[];
+  }
+
+  /**
+   * 根据权限类型查找权限
+   * @param type 权限类型
+   * @returns 权限列表
+   */
+  async findByType(type: string): Promise<Permission[]> {
+    const permissions = await this.prisma.permission.findMany({
+      where: {
+        type,
+        deletedAt: null,
+      },
+    });
+    return permissions as unknown as Permission[];
   }
 }

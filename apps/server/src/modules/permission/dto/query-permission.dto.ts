@@ -21,4 +21,19 @@ export class QueryPermissionDto {
   @IsBoolean()
   @IsOptional()
   status?: boolean;
+
+  @ApiPropertyOptional({ description: '菜单路径' })
+  @IsString()
+  @IsOptional()
+  menuPath?: string;
+
+  @ApiPropertyOptional({ description: 'API路径' })
+  @IsString()
+  @IsOptional()
+  apiPath?: string;
+
+  @ApiPropertyOptional({ description: '数据范围' })
+  @IsString()
+  @IsOptional()
+  dataScope?: string;
 }
